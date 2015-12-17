@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="BlackJemCrabsJar">
+    <output-path>$USER_HOME$/OSBot/Scripts</output-path>
+    <root id="archive" name="BlackJemCrabsJar.jar">
+      <element id="module-output" name="OSBOTSCRIPT" />
+    </root>
+  </artifact>
+</component>

@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="unnamed">
+    <output-path>$PROJECT_DIR$/out/artifacts/unnamed</output-path>
+    <root id="archive" name="BlackJemCrabs.jar">
+      <element id="module-output" name="OSBOTSCRIPT" />
+    </root>
+  </artifact>
+</component>
