@@ -8,6 +8,7 @@ import bot.Main;
 import tasks.DelayedTask;
 import tasks.Task;
 
+import java.util.Objects;
 import java.util.concurrent.DelayQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -47,6 +48,8 @@ public class DelayedExecutionService extends ExecutionService<DelayedTask> {
     }
 
     public <T extends Task<Main>> boolean executeTask(T task, long delay, TimeUnit timeUnit) {
+        Objects.requireNonNull(task);
+
         if (isShuttingDown)
             return false;
 
@@ -67,6 +70,8 @@ public class DelayedExecutionService extends ExecutionService<DelayedTask> {
 
     @Override
     public <T extends Task<Main>> boolean executeTask(T task) {
+        Objects.requireNonNull(task);
+        
         if (!(DelayedTask.class.isAssignableFrom(task.getClass())
                 || isShuttingDown))
             return false;
