@@ -29,7 +29,7 @@ public abstract class DelayedTask extends Task<Main> implements Delayed {
     }
 
     public <T extends Main> DelayedTask(T script) {
-        super(script);
+        this(script, 0, TimeUnit.MILLISECONDS);
     }
 
     @Override
