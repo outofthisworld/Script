@@ -26,8 +26,13 @@ public class DelayedExecutionService extends ExecutionService<DelayedTask> {
             try {
                 DelayedTask delayedTask = delayedTasks.take();
                 try {
-                    if (delayedTask.checkCondition())
+                    if (!delayedTask.checkCondition()) {
+                        notifyListeners(delayedTask, false);
+                    } else {
                         delayedTask.executeTask();
+                        notifyListeners(delayedTask, true);
+                    }
+                    taskListeners.remove(delayedTask);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -143,6 +148,15 @@ public class DelayedExecutionService extends ExecutionService<DelayedTask> {
             if (executionListener == cachedListener) {
                 it.remove();
             }
+        }
+    }
+
+    private final void notifyListeners(DelayedTask task, boolean outCome) {
+        Objects.requireNonNull(task);
+
+        if (taskListeners.get(task) != null) {
+            for (ExecutionListener executionListener : taskListeners.get(task))
+                executionListener.onNotify(task, outCome);
         }
     }
 
