@@ -6,12 +6,10 @@ package bot;
 
 import GUI.Window;
 import config.ScriptConstants;
-import org.osbot.rs07.accessor.XTile;
 import org.osbot.rs07.api.ui.Message;
 import org.osbot.rs07.script.MethodProvider;
 import org.osbot.rs07.script.ScriptManifest;
 import services.DelayedExecutionService;
-import tasks.DelayedTask;
 import tasks.Task;
 
 import javax.imageio.ImageIO;
@@ -19,8 +17,6 @@ import java.awt.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.annotation.Annotation;
-import java.util.ArrayList;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Created by Unknown on 11/12/2015.
@@ -40,8 +36,6 @@ public class Main extends org.osbot.rs07.script.Script implements Annotation {
     );
     private final Task[] osBotTasks = {
     };
-    ArrayList<XTile> walkableXTiles = new ArrayList<>();
-
     static {
         try {
             InputStream inputStream = Main.class.getResourceAsStream("Background.png");
@@ -52,15 +46,19 @@ public class Main extends org.osbot.rs07.script.Script implements Annotation {
         }
     }
 
-    private boolean done = false;
 
 
     public Main() {
         super();
     }
 
-    public static boolean isWalkable(int flag) {
-        return (flag & (UNWALKABLE)) == 0;
+    //Local debugging
+    public static void main(String[] args) {
+        try {
+            new Main().onStart();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -76,39 +74,7 @@ public class Main extends org.osbot.rs07.script.Script implements Annotation {
 
     @Override
     public void onStart() throws InterruptedException {
-        log("Successfully started BlackJem Rock crab killer");
-        log("Setting up script V1.0");
-
         delayedExecutionService.startService();
-
-
-        DelayedTask delayedTask = new DelayedTask(this, 10000, TimeUnit.MILLISECONDS) {
-            @Override
-            public boolean checkCondition() {
-                return true;
-            }
-
-            @Override
-            public void executeTask() throws InterruptedException {
-                log("Delayed task executing after 10 seconds");
-            }
-        };
-        DelayedTask delayedTask1 = new DelayedTask(this, 5000, TimeUnit.MILLISECONDS) {
-            @Override
-            public boolean checkCondition() {
-                return true;
-            }
-
-            @Override
-            public void executeTask() throws InterruptedException {
-                log("Delayed task executing after 5 seconds");
-            }
-        };
-
-        log(delayedTask1.compareTo(delayedTask));
-
-        delayedExecutionService.executeTask(delayedTask);
-        delayedExecutionService.executeTask(delayedTask1);
     }
 
     @Override

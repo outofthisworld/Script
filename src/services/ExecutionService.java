@@ -12,14 +12,4 @@ import tasks.Task;
 public abstract class ExecutionService<T extends Task> implements Runnable, Service {
     protected volatile boolean executorIsRunnning = false;
     protected volatile boolean isShuttingDown = false;
-
-    @Override
-    public void startService() {
-        if (executorIsRunnning)
-            return;
-
-        isShuttingDown = false;
-        executorIsRunnning = true;
-        new Thread(this).start();
-    }
 }

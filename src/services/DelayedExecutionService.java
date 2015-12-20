@@ -6,6 +6,7 @@ package services;
 
 import Util.Preconditions;
 import bot.Main;
+import com.sun.istack.internal.NotNull;
 import tasks.DelayedTask;
 import tasks.Task;
 
@@ -24,6 +25,7 @@ public class DelayedExecutionService extends ExecutionService<DelayedTask> {
     public void run() {
         while (executorIsRunnning) {
             try {
+                //Blocking call
                 DelayedTask delayedTask = delayedTasks.take();
                 try {
                     if (!delayedTask.checkCondition()) {
@@ -45,7 +47,20 @@ public class DelayedExecutionService extends ExecutionService<DelayedTask> {
     }
 
     @Override
+    public void startService() {
+        if (executorIsRunnning)
+            return;
+
+        isShuttingDown = false;
+        executorIsRunnning = true;
+        new Thread(this).start();
+    }
+
+    @Override
     public void stopServiceImmediately() {
+        if (!executorIsRunnning || isShuttingDown)
+            return;
+
         delayedTasks.clear();
         stopService();
     }
@@ -55,17 +70,35 @@ public class DelayedExecutionService extends ExecutionService<DelayedTask> {
         isShuttingDown = true;
     }
 
-    public <T extends Task<Main>> boolean executeTask(T task, long delay, TimeUnit timeUnit) {
+    /**
+     * Execute task boolean.
+     *
+     * @param <T>      the type parameter
+     * @param task     the task
+     * @param delay    the delay
+     * @param timeUnit the time unit
+     * @return the boolean
+     */
+    public <T extends Task<Main>> boolean executeTask(@NotNull T task, long delay, @NotNull TimeUnit timeUnit) {
         Preconditions.exceptionIfNull(task, timeUnit);
 
-        if (isShuttingDown)
+        if (!canAddTask())
             return false;
 
         delayedTasks.offer(constructDelayedTask(task, delay, timeUnit));
         return true;
     }
 
-    public <T extends Task<Main>> DelayedTask constructDelayedTask(T task, long delay, TimeUnit timeUnit) {
+    /**
+     * Construct delayed task delayed task.
+     *
+     * @param <T>      the type parameter
+     * @param task     the task
+     * @param delay    the delay
+     * @param timeUnit the time unit
+     * @return the delayed task
+     */
+    public <T extends Task<Main>> DelayedTask constructDelayedTask(@NotNull T task, long delay, @NotNull TimeUnit timeUnit) {
         return new DelayedTask(task.getScript(), delay, timeUnit) {
             @Override
             public boolean checkCondition() {
@@ -79,7 +112,17 @@ public class DelayedExecutionService extends ExecutionService<DelayedTask> {
         };
     }
 
-    public <T extends Task<Main>> boolean executeTask(T task, long delay, TimeUnit timeUnit, ExecutionListener delayedExecutionListener) {
+    /**
+     * Execute task boolean.
+     *
+     * @param <T>                      the type parameter
+     * @param task                     the task
+     * @param delay                    the delay
+     * @param timeUnit                 the time unit
+     * @param delayedExecutionListener the delayed execution listener
+     * @return the boolean
+     */
+    public <T extends Task<Main>> boolean executeTask(@NotNull T task, long delay, @NotNull TimeUnit timeUnit, @NotNull ExecutionListener delayedExecutionListener) {
         Preconditions.exceptionIfNull(task, timeUnit, delayedExecutionListener);
 
         addTaskListener(task, delayedExecutionListener);
@@ -90,8 +133,19 @@ public class DelayedExecutionService extends ExecutionService<DelayedTask> {
         return true;
     }
 
-    public <T extends Task<Main>> boolean executeTask(T task, ExecutionListener delayedExecutionListener) {
+    /**
+     * Execute task boolean.
+     *
+     * @param <T>                      the type parameter
+     * @param task                     the task
+     * @param delayedExecutionListener the delayed execution listener
+     * @return the boolean
+     */
+    public <T extends Task<Main>> boolean executeTask(@NotNull T task, @NotNull ExecutionListener delayedExecutionListener) {
         Preconditions.exceptionIfNull(task, delayedExecutionListener);
+
+        if (!canAddTask())
+            return false;
 
         addTaskListener(task, delayedExecutionListener);
         if (!executeTask(task)) {
@@ -101,11 +155,15 @@ public class DelayedExecutionService extends ExecutionService<DelayedTask> {
         return true;
     }
 
+    private boolean canAddTask() {
+        return executorIsRunnning && !isShuttingDown;
+    }
+
     @Override
-    public <T extends Task<Main>> boolean executeTask(T task) {
+    public <T extends Task<Main>> boolean executeTask(@NotNull T task) {
         Objects.requireNonNull(task);
 
-        if (isShuttingDown)
+        if (!canAddTask())
             return false;
 
         if (!(DelayedTask.class.isAssignableFrom(task.getClass())))
@@ -115,7 +173,14 @@ public class DelayedExecutionService extends ExecutionService<DelayedTask> {
         return true;
     }
 
-    public <T extends Task<Main>> void addTaskListener(T task, ExecutionListener listener) {
+    /**
+     * Add task listener.
+     *
+     * @param <T>      the type parameter
+     * @param task     the task
+     * @param listener the listener
+     */
+    public <T extends Task<Main>> void addTaskListener(@NotNull T task, @NotNull ExecutionListener listener) {
         Preconditions.exceptionIfNull(task, listener);
 
         DelayedTask delayedTask = null;
@@ -123,9 +188,8 @@ public class DelayedExecutionService extends ExecutionService<DelayedTask> {
         if (DelayedTask.class.isAssignableFrom(task.getClass()))
             delayedTask = (DelayedTask) task;
 
-
         if (taskListeners.get(task) == null) {
-            List<ExecutionListener> l = Collections.emptyList();
+            List<ExecutionListener> l = new ArrayList<>();
             l.add(listener);
             if (delayedTask != null) {
                 taskListeners.put(delayedTask, l);
@@ -137,7 +201,14 @@ public class DelayedExecutionService extends ExecutionService<DelayedTask> {
         }
     }
 
-    public <T extends Task<Main>> void removeTaskListener(T task, ExecutionListener executionListener) {
+    /**
+     * Remove task listener.
+     *
+     * @param <T>               the type parameter
+     * @param task              the task
+     * @param executionListener the execution listener
+     */
+    public <T extends Task<Main>> void removeTaskListener(@NotNull T task, @NotNull ExecutionListener executionListener) {
         Preconditions.exceptionIfNull(task, executionListener);
 
         if (taskListeners.get(task) == null || taskListeners.get(task).size() == 0)
@@ -151,7 +222,7 @@ public class DelayedExecutionService extends ExecutionService<DelayedTask> {
         }
     }
 
-    private final void notifyListeners(DelayedTask task, boolean outCome) {
+    private final void notifyListeners(@NotNull DelayedTask task, boolean outCome) {
         Objects.requireNonNull(task);
 
         if (taskListeners.get(task) != null) {
@@ -160,6 +231,11 @@ public class DelayedExecutionService extends ExecutionService<DelayedTask> {
         }
     }
 
+    /**
+     * Get task array delayed task [ ].
+     *
+     * @return the delayed task [ ]
+     */
     public DelayedTask[] getTaskArray() {
         DelayedTask[] delayedTasks1 = new DelayedTask[delayedTasks.size()];
         System.arraycopy(delayedTasks.toArray(), 0, delayedTasks1, 0, delayedTasks.size());
